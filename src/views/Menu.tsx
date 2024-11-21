@@ -1,7 +1,9 @@
 import React, { useState, useEffect } from 'react';
-import { PlusCircle, Search, ShoppingCart, Edit2, X, Save } from 'lucide-react';
+import { PlusCircle, Search, ShoppingCart, Edit2 } from 'lucide-react';
 import Button from '../components/ui/Button';
 import Input from '../components/ui/Input';
+import EditDishModal from '../components/EditDishModal';
+import OrderModal from '../components/OrderModal';
 import { useAuth } from '../contexts/AuthContext';
 import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
@@ -21,6 +23,12 @@ interface MenuItem {
 
 const API_URL = 'http://localhost:8080/api';
 
+const LOCATIONS = [
+  { id: '1', name: 'Sede Concepcion' },
+  { id: '2', name: 'Sede Zaragocilla' },
+  { id: '3', name: 'Sede Pie de la popa' },
+];
+
 export default function Menu() {
   const { userRole } = useAuth();
   const navigate = useNavigate();
@@ -32,12 +40,6 @@ export default function Menu() {
   const [orderObservations, setOrderObservations] = useState('');
   const [searchTerm, setSearchTerm] = useState('');
   const [editFormData, setEditFormData] = useState<MenuItem | null>(null);
-
-  const LOCATIONS = [
-    { id: '1', name: 'Sede Concepcion' },
-    { id: '2', name: 'Sede Zaragocilla' },
-    { id: '3', name: 'Sede Pie de la popa' },
-  ];
 
   useEffect(() => {
     loadDishes();
@@ -99,7 +101,8 @@ export default function Menu() {
   );
 
   const isAvailable = (dish: MenuItem) => {
-    return dish.ordersToday < dish.maxDailyAmount && dish.state === 'DISPONIBLE';
+    return dish.ordersToday < dish.maxDailyAmount &&
+        dish.state.toLowerCase() === 'disponible';
   };
 
   return (
@@ -148,9 +151,6 @@ export default function Menu() {
                   <div className="flex justify-between items-start">
                     <div>
                       <h3 className="text-lg font-semibold text-gray-900">{item.name}</h3>
-                      <p className="text-sm text-gray-500">
-                        Pedidos hoy: {item.ordersToday}/{item.maxDailyAmount}
-                      </p>
                     </div>
                     <span className="text-lg font-bold text-indigo-600">${item.price}</span>
                   </div>
@@ -184,176 +184,29 @@ export default function Menu() {
 
         {/* Modal de Edición */}
         {showEditModal && editFormData && (
-            <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
-              <div className="bg-white rounded-lg max-w-2xl w-full p-6">
-                <div className="flex justify-between items-center mb-6">
-                  <h2 className="text-xl font-semibold">Editar Plato</h2>
-                  <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => {
-                        setShowEditModal(false);
-                        setEditFormData(null);
-                      }}
-                  >
-                    <X className="h-5 w-5" />
-                  </Button>
-                </div>
-
-                <form onSubmit={handleSubmitEdit} className="space-y-6">
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    <Input
-                        label="Nombre del producto"
-                        value={editFormData.name}
-                        onChange={(e) => setEditFormData({ ...editFormData, name: e.target.value })}
-                        required
-                    />
-
-                    <Input
-                        label="Precio"
-                        type="number"
-                        step="0.01"
-                        value={editFormData.price}
-                        onChange={(e) => setEditFormData({ ...editFormData, price: e.target.value })}
-                        required
-                    />
-
-                    <Input
-                        label="Cantidad total"
-                        type="number"
-                        value={editFormData.amount}
-                        onChange={(e) => setEditFormData({ ...editFormData, amount: parseInt(e.target.value) })}
-                        required
-                    />
-
-                    <Input
-                        label="Cantidad máxima diaria"
-                        type="number"
-                        value={editFormData.maxDailyAmount}
-                        onChange={(e) => setEditFormData({ ...editFormData, maxDailyAmount: parseInt(e.target.value) })}
-                        required
-                    />
-
-                    <Input
-                        label="URL de la imagen"
-                        type="url"
-                        value={editFormData.image}
-                        onChange={(e) => setEditFormData({ ...editFormData, image: e.target.value })}
-                        required
-                    />
-
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">Estado</label>
-                      <select
-                          className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500"
-                          value={editFormData.state}
-                          onChange={(e) => setEditFormData({ ...editFormData, state: e.target.value })}
-                          required
-                      >
-                        <option value="DISPONIBLE">Disponible</option>
-                        <option value="NO_DISPONIBLE">No Disponible</option>
-                      </select>
-                    </div>
-                  </div>
-
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
-                      Descripción
-                    </label>
-                    <textarea
-                        rows={3}
-                        className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500"
-                        value={editFormData.description}
-                        onChange={(e) => setEditFormData({ ...editFormData, description: e.target.value })}
-                        required
-                    />
-                  </div>
-
-                  {editFormData.image && (
-                      <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-2">
-                          Vista previa
-                        </label>
-                        <img
-                            src={editFormData.image}
-                            alt="Preview"
-                            className="w-full max-w-md h-48 object-cover rounded-lg"
-                            onError={(e) => {
-                              const target = e.target as HTMLImageElement;
-                              target.src = 'https://via.placeholder.com/400x300';
-                            }}
-                        />
-                      </div>
-                  )}
-
-                  <div className="flex justify-end space-x-3">
-                    <Button
-                        variant="secondary"
-                        type="button"
-                        onClick={() => {
-                          setShowEditModal(false);
-                          setEditFormData(null);
-                        }}
-                    >
-                      Cancelar
-                    </Button>
-                    <Button type="submit">
-                      <Save className="h-5 w-5 mr-2" />
-                      Guardar Cambios
-                    </Button>
-                  </div>
-                </form>
-              </div>
-            </div>
+            <EditDishModal
+                editFormData={editFormData}
+                onClose={() => {
+                  setShowEditModal(false);
+                  setEditFormData(null);
+                }}
+                onSubmit={handleSubmitEdit}
+                onChange={setEditFormData}
+            />
         )}
 
         {/* Modal de Pedido */}
         {showOrderModal && selectedItem && (
-            <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4">
-              <div className="bg-white rounded-lg max-w-md w-full p-6">
-                <h2 className="text-xl font-semibold mb-4">Realizar Pedido</h2>
-                <div className="space-y-4">
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">Sede</label>
-                    <select
-                        className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500"
-                        value={orderLocation}
-                        onChange={(e) => setOrderLocation(e.target.value)}
-                        required
-                    >
-                      <option value="">Seleccionar sede</option>
-                      {LOCATIONS.map(location => (
-                          <option key={location.id} value={location.id}>
-                            {location.name}
-                          </option>
-                      ))}
-                    </select>
-                  </div>
-
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
-                      Observaciones
-                    </label>
-                    <textarea
-                        className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500"
-                        rows={3}
-                        value={orderObservations}
-                        onChange={(e) => setOrderObservations(e.target.value)}
-                        placeholder="Instrucciones especiales para su pedido..."
-                    />
-                  </div>
-
-                  <div className="flex justify-end space-x-3">
-                    <Button variant="secondary" onClick={() => setShowOrderModal(false)}>
-                      Cancelar
-                    </Button>
-                    <Button onClick={handleSubmitOrder} disabled={!orderLocation}>
-                      Confirmar Pedido
-                    </Button>
-                  </div>
-                </div>
-              </div>
-            </div>
+            <OrderModal
+                selectedItem={selectedItem}
+                locations={LOCATIONS}
+                orderLocation={orderLocation}
+                orderObservations={orderObservations}
+                onLocationChange={setOrderLocation}
+                onObservationsChange={setOrderObservations}
+                onClose={() => setShowOrderModal(false)}
+                onSubmit={handleSubmitOrder}
+            />
         )}
       </div>
   );
