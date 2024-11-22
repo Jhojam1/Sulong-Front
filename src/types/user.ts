@@ -1,6 +1,6 @@
 export enum Role {
-    Administrador = 'Administrador',
     Usuario = 'Usuario',
+    Administrador = 'Administrador',
     Cajero = 'Cajero'
 }
 
@@ -11,7 +11,7 @@ export interface TempUser {
     mail: string;
     password: string;
     numberPhone: string;
-    role: Role;
+    role: string;
 }
 
 export interface UserRegistration {
@@ -20,6 +20,6 @@ export interface UserRegistration {
     mail: string;
     password: string;
     numberPhone: string;
-    role: Role;
+    role: string;
     state: string;
 }

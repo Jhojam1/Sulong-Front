@@ -28,15 +28,14 @@ export const userService = {
                 numberIdentification: userData.numberIdentification,
                 mail: userData.mail,
                 password: userData.password,
-                numberPhone: userData.numberPhone,
+                phoneNumber: userData.numberPhone, // Cambiado a phoneNumber para coincidir con el backend
                 role: userData.role,
-                state: 'Activo' // Cambiado a 'Activo' para coincidir con el backend
+                state: 'Activo'
             });
 
             return response.data;
         } catch (error: any) {
             if (axios.isAxiosError(error)) {
-                // Extraer el mensaje de error del backend
                 const errorMessage = error.response?.data || 'Error al registrar el usuario';
                 throw new Error(errorMessage);
             }

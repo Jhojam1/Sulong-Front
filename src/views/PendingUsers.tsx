@@ -19,6 +19,7 @@ export default function PendingUsers() {
   const loadTempUsers = async () => {
     try {
       const users = await userService.getTempUsers();
+      console.log('Usuarios cargados:', users); // Para debug
       setPendingUsers(users);
     } catch (error) {
       toast.error('Error al cargar usuarios pendientes');
@@ -31,7 +32,6 @@ export default function PendingUsers() {
   const handleAccept = async (user: TempUser) => {
     setProcessing(user.id);
     try {
-      // Registrar el usuario en el sistema principal
       await userService.registerUser({
         fullName: user.fullName,
         numberIdentification: user.numberIdentification,
@@ -42,10 +42,7 @@ export default function PendingUsers() {
         state: 'Activo'
       });
 
-      // Solo eliminar el usuario temporal si el registro fue exitoso
       await userService.deleteTempUser(user.id);
-
-      // Actualizar la lista
       setPendingUsers(prevUsers => prevUsers.filter(u => u.id !== user.id));
       toast.success('Usuario registrado exitosamente');
     } catch (error: any) {
@@ -76,13 +73,12 @@ export default function PendingUsers() {
       user.mail.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
-  const getRoleLabel = (role: Role) => {
-    const labels = {
-      [Role.Administrador]: 'Administrador',
-      [Role.Usuario]: 'Usuario',
-      [Role.Cajero]: 'Cajero'
-    };
-    return labels[role] || role;
+  const getRoleLabel = (role: string) => {
+    // Asegurarse de que el rol sea una cadena y manejar el caso null/undefined
+    if (!role) return 'No especificado';
+
+    // Primera letra en mayúscula, resto en minúscula
+    return role.charAt(0).toUpperCase() + role.slice(1).toLowerCase();
   };
 
   if (loading) {
