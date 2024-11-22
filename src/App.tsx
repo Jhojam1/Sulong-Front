@@ -2,7 +2,7 @@ import React from 'react';
 import { BrowserRouter, Routes, Route, Navigate, useLocation } from 'react-router-dom';
 import Navbar from './components/Navbar';
 import Menu from './views/Menu';
-import MenuEdit from './views/MenuEdit';
+import MenuEdit from './views/CreateDish.tsx';
 import UserManagement from './views/UserManagement';
 import Login from './views/Login';
 import Register from './views/Register';

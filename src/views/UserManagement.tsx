@@ -1,81 +1,59 @@
-import { Users, Search, Edit2, Mail, Phone, MapPin } from 'lucide-react';
-import Button from '../components/ui/Button';
-import Input from '../components/ui/Input';
-import {useState} from "react";
+import { Users, Search } from 'lucide-react';
+import {Customer} from "../types/Customer.ts";
+import {useAuth} from "../contexts/AuthContext.tsx";
+import {customerApi} from "../services/Customer.ts";
+import Input from "../components/ui/Input.tsx";
+import Button from "../components/ui/Button.tsx";
+import CustomerCard from "../components/Clientes/CustomerCard.tsx";
+import {useEffect, useState} from "react";
 
-interface Customer {
-  id: string;
-  name: string;
-  email: string;
-  phone: string;
-  address: string;
-  orders: number;
-  totalSpent: number;
-  lastOrder: Date;
-  avatar: string;
-  status: 'Activo' | 'Inactivo';
-}
-
-const SAMPLE_CUSTOMERS: Customer[] = [
-  {
-    id: 'C001',
-    name: 'Juan Pérez',
-    email: 'juan@example.com',
-    phone: '+34 612 345 678',
-    address: 'Calle Mayor 123, Madrid',
-    orders: 15,
-    totalSpent: 458.75,
-    lastOrder: new Date('2024-03-09'),
-    avatar: 'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?ixlib=rb-1.2.1&auto=format&fit=facearea&facepad=2&w=256&h=256&q=80',
-    status: 'Activo',
-  },
-  {
-    id: 'C002',
-    name: 'María García',
-    email: 'maria@example.com',
-    phone: '+34 623 456 789',
-    address: 'Avenida Libertad 45, Barcelona',
-    orders: 8,
-    totalSpent: 234.5,
-    lastOrder: new Date('2024-03-08'),
-    avatar: 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?ixlib=rb-1.2.1&auto=format&fit=facearea&facepad=2&w=256&h=256&q=80',
-    status: 'Inactivo',
-  },
-  {
-    id: 'C003',
-    name: 'Carlos Rodríguez',
-    email: 'carlos@example.com',
-    phone: '+34 634 567 890',
-    address: 'Plaza España 7, Valencia',
-    orders: 23,
-    totalSpent: 687.25,
-    lastOrder: new Date('2024-03-10'),
-    avatar: 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?ixlib=rb-1.2.1&auto=format&fit=facearea&facepad=2&w=256&h=256&q=80',
-    status: 'Activo',
-  },
-];
 
 export default function Customers() {
   const [searchQuery, setSearchQuery] = useState('');
-  const [customers, setCustomers] = useState<Customer[]>(SAMPLE_CUSTOMERS);
+  const [customers, setCustomers] = useState<Customer[]>([]);
+  const [loading, setLoading] = useState(true);
+  const { isAuthenticated } = useAuth();
 
-  // Filtrar clientes por búsqueda
+  useEffect(() => {
+    if (isAuthenticated) {
+      loadCustomers();
+    }
+  }, [isAuthenticated]);
+
+  const loadCustomers = async () => {
+    try {
+      const data = await customerApi.getAllCustomers();
+      setCustomers(data);
+    } catch (error) {
+      console.error('Error loading customers:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleStatusToggle = async (id: number, currentState: string) => {
+    try {
+      const newState = currentState === 'Activo' ? 'Inactivo' : 'Activo';
+      await customerApi.updateCustomerStatus(id, newState);
+      setCustomers(customers.map(customer =>
+          customer.id === id ? { ...customer, state: newState } : customer
+      ));
+    } catch (error) {
+      console.error('Error updating customer status:', error);
+    }
+  };
+
   const filteredCustomers = customers.filter((customer) =>
-      customer.name.toLowerCase().includes(searchQuery.toLowerCase())
+      customer.fullName.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
-  const toggleStatus = (id: string) => {
-    setCustomers((prevCustomers) =>
-        prevCustomers.map((customer) =>
-            customer.id === id
-                ? {
-                  ...customer,
-                  status: customer.status === 'Activo' ? 'Inactivo' : 'Activo',
-                }
-                : customer
-        )
+  if (loading) {
+    return (
+        <div className="flex items-center justify-center min-h-screen">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-gray-900"></div>
+        </div>
     );
-  };
+  }
 
   return (
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
@@ -102,71 +80,11 @@ export default function Customers() {
 
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {filteredCustomers.map((customer) => (
-              <div
+              <CustomerCard
                   key={customer.id}
-                  className="bg-white rounded-lg shadow-md overflow-hidden hover:shadow-lg transition-shadow"
-              >
-                <div className="p-6">
-                  <div className="flex items-center">
-                    <img
-                        className="h-12 w-12 rounded-full"
-                        src={customer.avatar}
-                        alt={customer.name}
-                    />
-                    <div className="ml-4">
-                      <h3 className="text-lg font-semibold text-gray-900">
-                        {customer.name}
-                      </h3>
-                      <p className="text-sm text-gray-500">Cliente #{customer.id}</p>
-                    </div>
-                  </div>
-
-                  <div className="mt-4 space-y-2">
-                    <div className="flex items-center text-sm text-gray-600">
-                      <Mail className="h-4 w-4 mr-2" />
-                      {customer.email}
-                    </div>
-                    <div className="flex items-center text-sm text-gray-600">
-                      <Phone className="h-4 w-4 mr-2" />
-                      {customer.phone}
-                    </div>
-                    <div className="flex items-center text-sm text-gray-600">
-                      <MapPin className="h-4 w-4 mr-2" />
-                      {customer.address}
-                    </div>
-                  </div>
-
-                  {/* Muestra el total de pedidos y total gastado en paralelo */}
-                  <div className="mt-4 flex justify-between items-center">
-                    <div className="flex items-center text-sm text-gray-600">
-                      <span className="font-semibold">Total de Pedidos:</span>
-                      <span className="ml-2">{customer.orders}</span>
-                    </div>
-                    <div className="flex items-center text-sm text-gray-600">
-                      <span className="font-semibold">Total Gastado:</span>
-                      <span className="ml-2">${customer.totalSpent.toFixed(2)}</span>
-                    </div>
-                  </div>
-
-                  <div className="mt-4 flex justify-end space-x-2">
-                    <Button variant="secondary" size="sm">
-                      <Edit2 className="h-4 w-4 mr-1" />
-                      Editar
-                    </Button>
-                    <Button
-                        variant="secondary"
-                        size="sm"
-                        className="flex items-center"
-                        onClick={() => toggleStatus(customer.id)}
-                    >
-                  <span
-                      className={`h-3 w-3 rounded-full ${customer.status === 'Activo' ? 'bg-green-500' : 'bg-red-500'} mr-2`}
-                  ></span>
-                      {customer.status}
-                    </Button>
-                  </div>
-                </div>
-              </div>
+                  customer={customer}
+                  onStatusToggle={handleStatusToggle}
+              />
           ))}
         </div>
       </div>
