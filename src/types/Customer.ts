@@ -5,9 +5,6 @@ export interface Customer {
     state: 'Activo' | 'Inactivo';
     mail: string;
     role: string;
-    phone?: string;
-    address?: string;
-    orders?: number;
-    totalSpent?: number;
-    lastOrder?: Date;
+    numberPhone?: string;
+    password?: string;
 }
