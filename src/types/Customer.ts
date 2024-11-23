@@ -1,3 +1,9 @@
+export interface Company {
+    id: number;
+    name: string;
+    state: string;
+}
+
 export interface Customer {
     id: number;
     fullName: string;
@@ -7,4 +13,5 @@ export interface Customer {
     role: string;
     numberPhone?: string;
     password?: string;
+    company: Company;
 }

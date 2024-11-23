@@ -1,4 +1,4 @@
-import { Edit2, Mail, Phone, User } from 'lucide-react';
+import { Edit2, Mail, Phone, User, Building2 } from 'lucide-react';
 import { Customer } from "../../types/Customer.ts";
 import { customerApi } from "../../services/Customer.ts";
 import Button from "../ui/Button.tsx";
@@ -30,7 +30,6 @@ export default function CustomerCard({ customer, onStatusToggle, onEdit }: Custo
             loadImage();
         }
 
-        // Cleanup function to revoke object URL
         return () => {
             if (avatarUrl) {
                 URL.revokeObjectURL(avatarUrl);
@@ -72,6 +71,10 @@ export default function CustomerCard({ customer, onStatusToggle, onEdit }: Custo
                             <span>{customer.numberPhone}</span>
                         </div>
                     )}
+                    <div className="flex items-center text-sm text-gray-600">
+                        <Building2 className="h-4 w-4 mr-2 text-gray-400" />
+                        <span className="truncate">{customer.company.name}</span>
+                    </div>
                 </div>
                 <div className="mt-4 flex justify-end space-x-2">
                     <Button variant="secondary" size="sm" onClick={onEdit} className="hover:bg-gray-100">
@@ -84,11 +87,11 @@ export default function CustomerCard({ customer, onStatusToggle, onEdit }: Custo
                         className="flex items-center hover:bg-gray-100"
                         onClick={() => onStatusToggle(customer.id, customer.state)}
                     >
-            <span
-                className={`h-3 w-3 rounded-full ${
-                    customer.state === 'Activo' ? 'bg-green-500' : 'bg-red-500'
-                } mr-2`}
-            ></span>
+                        <span
+                            className={`h-3 w-3 rounded-full ${
+                                customer.state === 'Activo' ? 'bg-green-500' : 'bg-red-500'
+                            } mr-2`}
+                        ></span>
                         {customer.state}
                     </Button>
                 </div>
