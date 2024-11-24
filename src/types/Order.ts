@@ -42,4 +42,4 @@ export interface Order {
     headquarter: Headquarter;
 }
 
-export type OrderStatus = 'PENDIENTE' | 'ENTREGADO' | 'CANCELADO';
+export type OrderStatus = 'Pendiente' | 'Entregado' | 'Cancelado';

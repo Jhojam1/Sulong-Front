@@ -1,12 +1,12 @@
-import { Search } from 'lucide-react';
-import Button from '../components/ui/Button';
-import Input from '../components/ui/Input';
-import { useAuth } from '../contexts/AuthContext';
+import React, { useState, useEffect } from 'react';
+import { Search, Calendar } from 'lucide-react';
+import {useAuth} from "../contexts/AuthContext.tsx";
 import {Order, OrderStatus} from "../types/Order.ts";
 import {orderService} from "../services/Order.ts";
-import {OrderStatusBadge} from "../components/Ordenes/OrderStatus.tsx";
+import Input from "../components/ui/Input.tsx";
+import Button from "../components/ui/Button.tsx";
 import {OrderModal} from "../components/Ordenes/OrderModal.tsx";
-import {useEffect, useState} from "react";
+import {OrderStatusBadge} from "../components/Ordenes/OrderStatus.tsx";
 
 
 export default function Orders() {
@@ -17,6 +17,12 @@ export default function Orders() {
   const [selectedOrder, setSelectedOrder] = useState<Order | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [dateFilter, setDateFilter] = useState(() => {
+    const colombiaDate = new Date().toLocaleString('en-US', { timeZone: 'America/Bogota' });
+    const today = new Date(colombiaDate);
+    today.setHours(0, 0, 0, 0);
+    return today;
+  });
 
   useEffect(() => {
     fetchOrders();
@@ -47,11 +53,24 @@ export default function Orders() {
     }
   };
 
+  const handleDateChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const [year, month, day] = e.target.value.split('-').map(Number);
+    const newDate = new Date(year, month - 1, day);
+    newDate.setHours(0, 0, 0, 0);
+    setDateFilter(newDate);
+  };
+
   const filteredOrders = orders.filter(order => {
+    const orderDate = new Date(order.fechaPedido);
+    const colombiaOrderDate = new Date(orderDate.toLocaleString('en-US', { timeZone: 'America/Bogota' }));
+    colombiaOrderDate.setHours(0, 0, 0, 0);
+
     const matchesSearch = order.user.fullName.toLowerCase().includes(searchQuery.toLowerCase()) ||
         order.id.toString().includes(searchQuery);
     const matchesStatus = statusFilter === 'all' || order.state === statusFilter;
-    return matchesSearch && matchesStatus;
+    const matchesDate = colombiaOrderDate.getTime() === dateFilter.getTime();
+
+    return matchesSearch && matchesStatus && matchesDate;
   });
 
   if (loading) {
@@ -75,7 +94,7 @@ export default function Orders() {
             Pedidos
           </h1>
           {userRole === 'admin' && (
-              <div className="flex space-x-4 w-full sm:w-auto">
+              <div className="flex flex-wrap gap-4 w-full sm:w-auto">
                 <div className="relative flex-grow sm:flex-grow-0">
                   <Input
                       placeholder="Buscar pedidos..."
@@ -85,15 +104,26 @@ export default function Orders() {
                   />
                   <Search className="absolute left-3 top-2.5 h-5 w-5 text-gray-400" />
                 </div>
+                <div className="relative flex-grow sm:flex-grow-0">
+                  <div className="relative">
+                    <input
+                        type="date"
+                        value={dateFilter.toISOString().split('T')[0]}
+                        onChange={handleDateChange}
+                        className="w-full px-4 py-2 rounded-md border border-gray-300 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 pl-10 text-gray-700"
+                    />
+                    <Calendar className="absolute left-3 top-2.5 h-5 w-5 text-gray-400 pointer-events-none" />
+                  </div>
+                </div>
                 <select
-                    className="rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
+                    className="rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 px-4 py-2"
                     value={statusFilter}
                     onChange={(e) => setStatusFilter(e.target.value)}
                 >
                   <option value="all">Todos los estados</option>
-                  <option value="PENDIENTE">Pendientes</option>
-                  <option value="ENTREGADO">Entregados</option>
-                  <option value="CANCELADO">Cancelados</option>
+                  <option value="Pendiente">Pendiente</option>
+                  <option value="Entregado">Entregado</option>
+                  <option value="Cancelado">Cancelado</option>
                 </select>
               </div>
           )}
@@ -146,7 +176,14 @@ export default function Orders() {
                       <OrderStatusBadge status={order.state as OrderStatus} />
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                      {new Date(order.fechaPedido).toLocaleString()}
+                      {new Date(order.fechaPedido).toLocaleDateString('es-ES', {
+                        timeZone: 'America/Bogota',
+                        day: '2-digit',
+                        month: '2-digit',
+                        year: 'numeric',
+                        hour: '2-digit',
+                        minute: '2-digit'
+                      })}
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
                       <Button

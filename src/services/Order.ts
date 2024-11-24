@@ -1,5 +1,5 @@
 import axios from 'axios';
-import {Order} from "../types/Order.ts";
+import { Order, OrderStatus } from "../types/Order.ts";
 
 const API_URL = 'http://localhost:8080/api';
 
@@ -24,9 +24,15 @@ class OrderService {
         }
     }
 
-    async updateOrderStatus(orderId: number, state: string): Promise<Order> {
+    async updateOrderStatus(orderId: number, state: OrderStatus): Promise<Order> {
         try {
-            const response = await axios.put(`${API_URL}/orders/${orderId}`, { state });
+            // Convertir el estado a formato correcto (primera letra mayúscula)
+            const formattedState = state.charAt(0).toUpperCase() + state.slice(1).toLowerCase();
+
+            // Usar PATCH y enviar el estado como query parameter
+            const response = await axios.patch(
+                `${API_URL}/Order/updateOrderState/${orderId}/state?state=${formattedState}`
+            );
             return response.data;
         } catch (error) {
             console.error('Error updating order status:', error);
