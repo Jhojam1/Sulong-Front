@@ -23,3 +23,22 @@ export interface UserRegistration {
     role: string;
     state: string;
 }
+
+export interface User {
+    id: number;
+    fullName: string;
+    numberIdentification: number;
+    state: string;
+    mail: string;
+    numberPhone: string;
+    role: 'ADMIN' | 'USER';
+    createdAt: string;
+}
+
+export interface UpdateUserDto {
+    fullName?: string;
+    mail?: string;
+    numberPhone?: string;
+    currentPassword?: string;
+    newPassword?: string;
+}

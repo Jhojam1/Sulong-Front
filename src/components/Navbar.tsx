@@ -10,36 +10,74 @@ import {
   X,
   LogOut,
   UtensilsCrossed,
-  User
+  User,
+  Loader2
 } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
+import { toast } from 'react-hot-toast';
 import { customerApi } from "../services/Customer.ts";
+import axios from 'axios';
+
+const DEFAULT_AVATAR = 'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?ixlib=rb-1.2.1&auto=format&fit=facearea&facepad=2&w=256&h=256&q=80';
 
 export default function Navbar() {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [showProfileMenu, setShowProfileMenu] = useState(false);
-  const [avatarUrl, setAvatarUrl] = useState<string>('');
+  const [avatarUrl, setAvatarUrl] = useState<string>(DEFAULT_AVATAR);
+  const [isLoadingAvatar, setIsLoadingAvatar] = useState(true);
   const location = useLocation();
   const navigate = useNavigate();
-  const { logout, userRole, user } = useAuth();
+  const { logout, userRole, user, isAuthenticated } = useAuth();
 
   useEffect(() => {
+    let isMounted = true;
+
     const loadAvatar = async () => {
-      if (user?.id) {
-        try {
-          const url = await customerApi.getAvatar(user.id);
+      if (!isAuthenticated || !user?.email) {
+        console.log('Usuario no autenticado o sin email');
+        setIsLoadingAvatar(false);
+        return;
+      }
+
+      setIsLoadingAvatar(true);
+      try {
+        // Extraer el ID del usuario del email o usar otro identificador único
+        // Esto dependerá de cómo esté estructurada tu API
+        const userId = user.id; // O cualquier otro identificador que uses
+        console.log('Cargando avatar para:', userId);
+
+        const url = await customerApi.getAvatar(userId);
+        if (isMounted && url) {
+          console.log('Avatar URL recibida:', url);
           setAvatarUrl(url);
-        } catch (error) {
+        }
+      } catch (error) {
+        if (isMounted) {
           console.error('Error loading avatar:', error);
-          setAvatarUrl('https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?ixlib=rb-1.2.1&auto=format&fit=facearea&facepad=2&w=256&h=256&q=80');
+          setAvatarUrl(DEFAULT_AVATAR);
+          if (axios.isAxiosError(error) && error.response?.status !== 404) {
+            toast.error('Error al cargar el avatar', {
+              id: 'avatar-error',
+            });
+          }
+        }
+      } finally {
+        if (isMounted) {
+          setIsLoadingAvatar(false);
         }
       }
     };
 
     loadAvatar();
-  }, [user]);
 
-  // Close profile menu when clicking outside
+    return () => {
+      isMounted = false;
+      if (avatarUrl && avatarUrl !== DEFAULT_AVATAR) {
+        URL.revokeObjectURL(avatarUrl);
+      }
+    };
+  }, [user?.email, isAuthenticated]);
+
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
       const target = event.target as HTMLElement;
@@ -129,11 +167,18 @@ export default function Navbar() {
                     onClick={() => setShowProfileMenu(!showProfileMenu)}
                     className="flex items-center space-x-3 hover:bg-indigo-500 rounded-full p-1 transition-colors"
                 >
-                  <img
-                      className="h-8 w-8 rounded-full border-2 border-white cursor-pointer object-cover"
-                      src={avatarUrl}
-                      alt="User profile"
-                  />
+                  {isLoadingAvatar ? (
+                      <div className="h-8 w-8 rounded-full border-2 border-white flex items-center justify-center bg-indigo-500">
+                        <Loader2 className="h-4 w-4 animate-spin" />
+                      </div>
+                  ) : (
+                      <img
+                          className="h-8 w-8 rounded-full border-2 border-white cursor-pointer object-cover"
+                          src={avatarUrl}
+                          alt="User profile"
+                          onError={() => setAvatarUrl(DEFAULT_AVATAR)}
+                      />
+                  )}
                 </button>
 
                 {showProfileMenu && (
@@ -229,6 +274,7 @@ export default function Navbar() {
                       />
                     </>
                 )}
+
                 <div className="border-t border-indigo-800 mt-2 pt-2">
                   <MobileNavLink
                       to="/profile"
