@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { Building2, Plus, X, Check, Pencil, Save } from 'lucide-react';
 import Button from '../ui/Button';
 import Input from '../ui/Input';
-import { Company, EntityState } from '../../types/Setting';
+import {Company} from "../../types/Setting.ts";
 
 interface CompanySectionProps {
     companies: Company[];

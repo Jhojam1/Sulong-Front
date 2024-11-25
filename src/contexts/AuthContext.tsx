@@ -7,6 +7,7 @@ interface AuthContextType {
   login: (email: string, password: string) => Promise<void>;
   logout: () => void;
   user: any | null;
+  getAuthHeaders: () => { Authorization: string } | {};
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -21,56 +22,67 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     const token = localStorage.getItem('token');
     const storedUser = localStorage.getItem('user');
-    
+
     if (token && storedUser) {
       try {
+        console.log('=== Inicialización de AuthContext ===');
+        console.log('1. Token encontrado:', token);
         const parsedUser = JSON.parse(storedUser);
+        console.log('2. Usuario almacenado:', parsedUser);
         setIsAuthenticated(true);
         setUser(parsedUser);
         setUserRole(parsedUser.role);
-        
-        // Restaurar el header de autorización
-        axios.defaults.headers.common['Authorization'] = `Bearer ${token}`;
+        console.log('3. Rol establecido:', parsedUser.role);
       } catch (error) {
-        // Si hay un error al parsear, limpiar el localStorage
+        console.error('Error al parsear usuario almacenado:', error);
         localStorage.removeItem('token');
         localStorage.removeItem('user');
       }
+    } else {
+      console.log('No se encontró token o usuario en localStorage');
     }
   }, []);
 
+  const getAuthHeaders = () => {
+    const token = localStorage.getItem('token');
+    console.log('=== getAuthHeaders ===');
+    console.log('Token actual:', token);
+    const headers = token ? { Authorization: `Bearer ${token}` } : {};
+    console.log('Headers generados:', headers);
+    return headers;
+  };
+
   const login = async (email: string, password: string) => {
     try {
+      console.log('=== Intento de login ===');
+      console.log('1. Email:', email);
+
       const response = await axios.post(`${API_URL}/authenticate`, {
         user: email,
         password: password
       });
 
+      console.log('2. Respuesta del servidor:', response.data);
       const { token, authorities } = response.data;
-      
-      // Determinar el rol basado en las authorities
       const role = authorities.includes('Administrador') ? 'admin' : 'user';
-      
-      // Crear objeto de usuario
+
       const userData = {
         email,
         role,
         token
       };
 
-      // Guardar en localStorage
+      console.log('3. Datos de usuario a almacenar:', userData);
       localStorage.setItem('token', token);
       localStorage.setItem('user', JSON.stringify(userData));
 
-      // Actualizar estado
       setIsAuthenticated(true);
       setUser(userData);
       setUserRole(role);
-
-      // Configurar el token para futuras peticiones
-      axios.defaults.headers.common['Authorization'] = `Bearer ${token}`;
+      console.log('4. Estado actualizado - Role:', role);
 
     } catch (error: any) {
+      console.error('Error en login:', error);
       if (error.response) {
         throw new Error(error.response.data);
       }
@@ -79,18 +91,26 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   };
 
   const logout = () => {
+    console.log('=== Ejecutando logout ===');
     localStorage.removeItem('token');
     localStorage.removeItem('user');
-    delete axios.defaults.headers.common['Authorization'];
     setIsAuthenticated(false);
     setUser(null);
     setUserRole(null);
+    console.log('Estado limpiado y localStorage limpiado');
   };
 
   return (
-    <AuthContext.Provider value={{ isAuthenticated, userRole, login, logout, user }}>
-      {children}
-    </AuthContext.Provider>
+      <AuthContext.Provider value={{
+        isAuthenticated,
+        userRole,
+        login,
+        logout,
+        user,
+        getAuthHeaders
+      }}>
+        {children}
+      </AuthContext.Provider>
   );
 }
 

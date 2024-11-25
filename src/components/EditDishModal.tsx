@@ -1,26 +1,23 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { X, Save } from 'lucide-react';
-import Button from './ui/Button';
 import Input from './ui/Input';
 
 interface MenuItem {
-    id: number;
+    id?: string;
     name: string;
-    description: string;
-    price: string;
-    state: string;
+    price: string | number;
     amount: number;
     maxDailyAmount: number;
-    ordersToday: number;
-    lastUpdatedDate: string;
     image: string;
+    state: 'Disponible' | 'No Disponible';
+    description: string;
 }
 
 interface EditDishModalProps {
     editFormData: MenuItem;
     onClose: () => void;
     onSubmit: (e: React.FormEvent) => Promise<void>;
-    onChange: (updatedData: MenuItem) => void;
+    onChange: (data: MenuItem) => void;
 }
 
 export default function EditDishModal({
@@ -29,120 +26,178 @@ export default function EditDishModal({
                                           onSubmit,
                                           onChange
                                       }: EditDishModalProps) {
+    const [isSubmitting, setIsSubmitting] = useState(false);
+
+    const handleSubmit = async (e: React.FormEvent) => {
+        e.preventDefault();
+        setIsSubmitting(true);
+        try {
+            await onSubmit(e);
+        } catch (error) {
+            console.error('Error al guardar:', error);
+        } finally {
+            setIsSubmitting(false);
+        }
+    };
+
+    const handleInputChange = (field: keyof MenuItem, value: string | number) => {
+        onChange({
+            ...editFormData,
+            [field]: value
+        });
+    };
+
     return (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
-            <div className="bg-white rounded-lg max-w-2xl w-full p-6">
-                <div className="flex justify-between items-center mb-6">
-                    <h2 className="text-xl font-semibold">Editar Plato</h2>
-                    <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={onClose}
-                    >
-                        <X className="h-5 w-5" />
-                    </Button>
-                </div>
-
-                <form onSubmit={onSubmit} className="space-y-6">
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                        <Input
-                            label="Nombre del producto"
-                            value={editFormData.name}
-                            onChange={(e) => onChange({ ...editFormData, name: e.target.value })}
-                            required
-                        />
-
-                        <Input
-                            label="Precio"
-                            type="number"
-                            step="0.01"
-                            value={editFormData.price}
-                            onChange={(e) => onChange({ ...editFormData, price: e.target.value })}
-                            required
-                        />
-
-                        <Input
-                            label="Cantidad total"
-                            type="number"
-                            value={editFormData.amount}
-                            onChange={(e) => onChange({ ...editFormData, amount: parseInt(e.target.value) })}
-                            required
-                        />
-
-                        <Input
-                            label="Cantidad máxima diaria"
-                            type="number"
-                            value={editFormData.maxDailyAmount}
-                            onChange={(e) => onChange({ ...editFormData, maxDailyAmount: parseInt(e.target.value) })}
-                            required
-                        />
-
-                        <Input
-                            label="URL de la imagen"
-                            type="url"
-                            value={editFormData.image}
-                            onChange={(e) => onChange({ ...editFormData, image: e.target.value })}
-                            required
-                        />
-
-                        <div>
-                            <label className="block text-sm font-medium text-gray-700 mb-1">Estado</label>
-                            <select
-                                className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500"
-                                value={editFormData.state}
-                                onChange={(e) => onChange({ ...editFormData, state: e.target.value })}
-                                required
+        <div className="fixed inset-0 z-50 bg-black/50 backdrop-blur-sm">
+            <div className="fixed inset-0 overflow-y-auto">
+                <div className="min-h-full flex items-center justify-center p-4">
+                    <div className="relative bg-white rounded-lg shadow-xl w-full max-w-5xl mx-auto">
+                        <div className="sticky top-0 z-10 flex items-center justify-between p-4 md:p-6 border-b border-gray-200 bg-white rounded-t-lg">
+                            <h2 className="text-xl font-semibold text-gray-900">
+                                Editar Plato
+                            </h2>
+                            <button
+                                onClick={onClose}
+                                className="hover:bg-gray-100 rounded-full p-2"
                             >
-                                <option value="Disponible">Disponible</option>
-                                <option value="No Disponible">No Disponible</option>
-                            </select>
+                                <X className="h-5 w-5" />
+                            </button>
                         </div>
-                    </div>
 
-                    <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1">
-                            Descripción
-                        </label>
-                        <textarea
-                            rows={3}
-                            className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500"
-                            value={editFormData.description}
-                            onChange={(e) => onChange({ ...editFormData, description: e.target.value })}
-                            required
-                        />
-                    </div>
+                        <form onSubmit={handleSubmit} className="overflow-y-auto">
+                            <div className="p-4 md:p-6">
+                                <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                                    <div className="lg:col-span-2 space-y-6">
+                                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                            <Input
+                                                label="Nombre del plato"
+                                                value={editFormData.name}
+                                                onChange={(e) => handleInputChange('name', e.target.value)}
+                                                required
+                                            />
 
-                    {editFormData.image && (
-                        <div>
-                            <label className="block text-sm font-medium text-gray-700 mb-2">
-                                Vista previa
-                            </label>
-                            <img
-                                src={editFormData.image}
-                                alt="Preview"
-                                className="w-full max-w-md h-48 object-cover rounded-lg"
-                                onError={(e) => {
-                                    const target = e.target as HTMLImageElement;
-                                    target.src = 'https://via.placeholder.com/400x300';
-                                }}
-                            />
-                        </div>
-                    )}
+                                            <Input
+                                                label="Precio"
+                                                type="text"
+                                                value={editFormData.price}
+                                                onChange={(e) => handleInputChange('price', e.target.value)}
+                                                required
+                                            />
+                                        </div>
 
-                    <div className="flex justify-end space-x-3">
-                        <Button
-                            variant="secondary"
-                            type="button"
-                            onClick={onClose}
-                        >
-                            Cancelar
-                        </Button>
-                        <Button type="submit">
-                            <Save className="h-5 w-5 mr-2" />
-                            Guardar Cambios
-                        </Button>
+                                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                            <Input
+                                                label="Cantidad total"
+                                                type="number"
+                                                min="0"
+                                                value={editFormData.amount}
+                                                onChange={(e) => handleInputChange('amount', parseInt(e.target.value) || 0)}
+                                                required
+                                            />
+
+                                            <Input
+                                                label="Máx. diario"
+                                                type="number"
+                                                min="0"
+                                                value={editFormData.maxDailyAmount}
+                                                onChange={(e) => handleInputChange('maxDailyAmount', parseInt(e.target.value) || 0)}
+                                                required
+                                            />
+                                        </div>
+
+                                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                            <div>
+                                                <label className="block text-sm font-medium text-gray-700 mb-1">
+                                                    Estado
+                                                </label>
+                                                <select
+                                                    className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500"
+                                                    value={editFormData.state}
+                                                    onChange={(e) => handleInputChange('state', e.target.value as 'Disponible' | 'No Disponible')}
+                                                    required
+                                                >
+                                                    <option value="Disponible">Disponible</option>
+                                                    <option value="No Disponible">No Disponible</option>
+                                                </select>
+                                            </div>
+
+                                            <Input
+                                                label="URL de la imagen"
+                                                type="url"
+                                                value={editFormData.image}
+                                                onChange={(e) => handleInputChange('image', e.target.value)}
+                                                required
+                                            />
+                                        </div>
+
+                                        <div>
+                                            <label className="block text-sm font-medium text-gray-700 mb-1">
+                                                Descripción
+                                            </label>
+                                            <textarea
+                                                className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500 resize-none h-[120px]"
+                                                value={editFormData.description}
+                                                onChange={(e) => handleInputChange('description', e.target.value)}
+                                                required
+                                            />
+                                        </div>
+                                    </div>
+
+                                    <div className="lg:col-span-1">
+                                        {editFormData.image && (
+                                            <div className="sticky top-4">
+                                                <label className="block text-sm font-medium text-gray-700 mb-2">
+                                                    Vista previa
+                                                </label>
+                                                <div className="relative rounded-lg overflow-hidden bg-gray-100">
+                                                    <div className="aspect-[4/3]">
+                                                        <img
+                                                            src={editFormData.image}
+                                                            alt="Vista previa del plato"
+                                                            className="w-full h-full object-cover"
+                                                            onError={(e) => {
+                                                                const target = e.target as HTMLImageElement;
+                                                                target.src = 'https://via.placeholder.com/400x300?text=Error+de+imagen';
+                                                            }}
+                                                        />
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        )}
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div className="sticky bottom-0 flex flex-col-reverse sm:flex-row justify-end gap-3 px-4 md:px-6 py-4 border-t border-gray-200 bg-white">
+                                <button
+                                    type="button"
+                                    onClick={onClose}
+                                    disabled={isSubmitting}
+                                    className="w-full sm:w-auto px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md shadow-sm hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
+                                >
+                                    Cancelar
+                                </button>
+                                <button
+                                    type="submit"
+                                    disabled={isSubmitting}
+                                    className="w-full sm:w-auto px-4 py-2 text-sm font-medium text-white bg-indigo-600 border border-transparent rounded-md shadow-sm hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
+                                >
+                                    {isSubmitting ? (
+                                        <span className="flex items-center justify-center">
+                      <Save className="animate-spin h-5 w-5 mr-2" />
+                      Guardando...
+                    </span>
+                                    ) : (
+                                        <span className="flex items-center justify-center">
+                      <Save className="h-5 w-5 mr-2" />
+                      Guardar Cambios
+                    </span>
+                                    )}
+                                </button>
+                            </div>
+                        </form>
                     </div>
-                </form>
+                </div>
             </div>
         </div>
     );
