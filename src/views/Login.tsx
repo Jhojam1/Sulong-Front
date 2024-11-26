@@ -1,5 +1,4 @@
 import React, { useState } from 'react';
-import { LogIn } from 'lucide-react';
 import { useNavigate, Link } from 'react-router-dom';
 import Input from '../components/ui/Input';
 import Button from '../components/ui/Button';
@@ -31,78 +30,91 @@ export default function Login() {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50 flex flex-col justify-center py-12 sm:px-6 lg:px-8">
+    <div className="min-h-screen bg-gray-50 flex flex-col justify-center items-center py-12 sm:px-6 lg:px-8">
       <div className="sm:mx-auto sm:w-full sm:max-w-md">
-        <div className="flex justify-center">
-          <LogIn className="h-12 w-12 text-indigo-600" />
+        <div className="flex flex-col items-center">
+          {/* Imagen del logo */}
+          <img
+            src="Images/Sulong_icon.svg"  
+            alt="Icono SULONG"
+            className="h-18 w-15 object-contain"
+          />
         </div>
-        <h2 className="mt-6 text-center text-3xl font-extrabold text-gray-900">
-          Iniciar Sesión
-        </h2>
-        {error && (
-          <div className="mt-2 text-center text-sm text-red-600">
-            {error}
-          </div>
-        )}
-      </div>
 
-      <div className="mt-8 sm:mx-auto sm:w-full sm:max-w-md">
-        <div className="bg-white py-8 px-4 shadow sm:rounded-lg sm:px-10">
-          <form className="space-y-6" onSubmit={handleSubmit}>
-            <Input
-              label="Correo electrónico"
-              type="email"
-              required
-              value={formData.email}
-              onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-            />
+        {/*Formulario*/}
+        <div className="mt-6 sm:mx-auto sm:w-full sm:max-w-md">
+          <div className="bg-white py-8 px-4 shadow sm:rounded-lg sm:px-10">
+            <h2 className="text-center text-2xl font-bold text-gray-900 mb-6">
+              Iniciar Sesión
+            </h2>
+            <form className="space-y-6" onSubmit={handleSubmit}>
+              {/* Campo de correo electrónico */}
+              <Input
+                label="Correo electrónico"
+                type="email"
+                required
+                value={formData.email}
+                onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+              />
 
-            <Input
-              label="Contraseña"
-              type="password"
-              required
-              value={formData.password}
-              onChange={(e) => setFormData({ ...formData, password: e.target.value })}
-            />
+              {/* Campo de contraseña */}
+              <Input
+                label="Contraseña"
+                type="password"
+                required
+                value={formData.password}
+                onChange={(e) => setFormData({ ...formData, password: e.target.value })}
+              />
 
-            <div className="flex items-center justify-between">
-              <div className="flex items-center">
-                <input
-                  id="remember_me"
-                  type="checkbox"
-                  className="h-4 w-4 text-indigo-600 focus:ring-indigo-500 border-gray-300 rounded"
-                />
-                <label htmlFor="remember_me" className="ml-2 block text-sm text-gray-900">
-                  Recordarme
-                </label>
+              {/* Recordarme y link de contraseña olvidada */}
+              <div className="flex items-center justify-between">
+                <div className="flex items-center">
+                  <input
+                    id="remember_me"
+                    type="checkbox"
+                    className="h-4 w-4 text-indigo-600 focus:ring-indigo-500 border-gray-300 rounded"
+                  />
+                  <label htmlFor="remember_me" className="ml-2 block text-sm text-gray-900">
+                    Recordarme
+                  </label>
+                </div>
+
+                <div className="text-sm">
+                  <Link
+                    to="/reset-password"
+                    className="font-medium text-indigo-600 hover:text-indigo-500"
+                  >
+                    ¿Olvidaste tu contraseña?
+                  </Link>
+                </div>
               </div>
 
-              <div className="text-sm">
-                <Link
-                  to="/reset-password"
-                  className="font-medium text-indigo-600 hover:text-indigo-500"
-                >
-                  ¿Olvidaste tu contraseña?
+              {/* Botón de envío */}
+              <Button type="submit" isLoading={isLoading} className="w-full">
+                Iniciar Sesión
+              </Button>
+
+              {/* Enlaces adicionales */}
+              <div className="mt-4 text-center">
+                <Link to="/register" className="text-sm text-indigo-600 hover:text-indigo-500">
+                  ¿No tienes una cuenta? Regístrate
                 </Link>
               </div>
-            </div>
 
-            <Button type="submit" isLoading={isLoading} className="w-full">
-              Iniciar Sesión
-            </Button>
+              <div className="mt-4 text-center">
+                <Link to="/activate" className="text-sm text-indigo-600 hover:text-indigo-500">
+                  ¿Necesitas activar tu cuenta?
+                </Link>
+              </div>
 
-            <div className="mt-4 text-center">
-              <Link to="/register" className="text-sm text-indigo-600 hover:text-indigo-500">
-                ¿No tienes una cuenta? Regístrate
-              </Link>
-            </div>
-
-            <div className="mt-4 text-center">
-              <Link to="/activate" className="text-sm text-indigo-600 hover:text-indigo-500">
-                ¿Necesitas activar tu cuenta?
-              </Link>
-            </div>
-          </form>
+              {/* Mostrar errores si existen */}
+              {error && (
+                <div className="mt-2 text-center text-sm text-red-600">
+                  {error}
+                </div>
+              )}
+            </form>
+          </div>
         </div>
       </div>
     </div>
