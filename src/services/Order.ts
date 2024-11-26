@@ -14,6 +14,16 @@ class OrderService {
         }
     }
 
+    async getUserOrders(userId: number): Promise<Order[]> {
+        try {
+            const response = await axios.get(`${API_URL}/Order/findOrder/${userId}`);
+            return response.data;
+        } catch (error) {
+            console.error('Error fetching user orders:', error);
+            throw error;
+        }
+    }
+
     async createOrder(orderData: Partial<Order>): Promise<Order> {
         try {
             const response = await axios.post(`${API_URL}/Order/saveOrder`, orderData);
