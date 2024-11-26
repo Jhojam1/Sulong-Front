@@ -3,7 +3,7 @@ import axios from 'axios';
 
 interface AuthContextType {
   isAuthenticated: boolean;
-  userRole: 'admin' | 'user' | null;
+  userRole: 'admin' | 'cashier' | 'user' | null;
   login: (email: string, password: string) => Promise<void>;
   logout: () => void;
   user: any | null;
@@ -16,7 +16,7 @@ const API_URL = 'http://localhost:8080/api/auth';
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [isAuthenticated, setIsAuthenticated] = useState<boolean>(false);
-  const [userRole, setUserRole] = useState<'admin' | 'user' | null>(null);
+  const [userRole, setUserRole] = useState<'admin' | 'cashier' | 'user' | null>(null);
   const [user, setUser] = useState<any | null>(null);
 
   useEffect(() => {
@@ -70,11 +70,18 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       const { token, authorities, id } = response.data;
       console.log('3. ID del usuario recibido:', id);
 
-      const role = authorities.includes('Administrador') ? 'admin' : 'user';
+      let role;
+      if (authorities.includes('Administrador')) {
+        role = 'admin';
+      } else if (authorities.includes('Cajero')) {
+        role = 'cashier';
+      } else {
+        role = 'user';
+      }
 
       const userData = {
         email,
-        id, // Incluimos el id del usuario
+        id,
         role,
         token,
       };

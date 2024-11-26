@@ -34,26 +34,19 @@ export default function Navbar() {
 
     const loadAvatar = async () => {
       if (!isAuthenticated || !user?.email) {
-        console.log('Usuario no autenticado o sin email');
         setIsLoadingAvatar(false);
         return;
       }
 
       setIsLoadingAvatar(true);
       try {
-        // Extraer el ID del usuario del email o usar otro identificador único
-        // Esto dependerá de cómo esté estructurada tu API
-        const userId = user.id; // O cualquier otro identificador que uses
-        console.log('Cargando avatar para:', userId);
-
+        const userId = user.id;
         const url = await customerApi.getAvatar(userId);
         if (isMounted && url) {
-          console.log('Avatar URL recibida:', url);
           setAvatarUrl(url);
         }
       } catch (error) {
         if (isMounted) {
-          console.error('Error loading avatar:', error);
           setAvatarUrl(DEFAULT_AVATAR);
           if (axios.isAxiosError(error) && error.response?.status !== 404) {
             toast.error('Error al cargar el avatar', {
@@ -97,23 +90,23 @@ export default function Navbar() {
     }
   };
 
+  const canManageMenu = userRole === 'admin' || userRole === 'cashier';
+  const isAdmin = userRole === 'admin';
+
   return (
       <nav className="bg-indigo-600 text-white shadow-lg">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex items-center justify-between h-16">
-            {/* Logo and Brand */}
             <div
                 className="flex items-center cursor-pointer"
-                onClick={() => navigate(userRole === 'admin' ? '/dashboard' : '/menu')}
+                onClick={() => navigate(canManageMenu ? '/dashboard' : '/menu')}
             >
               <Package className="h-8 w-8" />
               <span className="ml-2 text-xl font-bold hidden sm:block">OrderPro</span>
             </div>
 
-            {/* Desktop Navigation */}
             <div className="hidden md:flex items-center space-x-4 lg:space-x-8">
-              {/* Search bar - solo para administrador */}
-              {userRole === 'admin' && (
+              {canManageMenu && (
                   <div className="relative">
                     <input
                         type="text"
@@ -137,7 +130,7 @@ export default function Navbar() {
                     text="Menú del Día"
                     isActive={location.pathname.startsWith('/menu')}
                 />
-                {userRole === 'admin' && (
+                {isAdmin && (
                     <>
                       <NavLink
                           to="/users"
@@ -161,7 +154,6 @@ export default function Navbar() {
                 )}
               </div>
 
-              {/* User Profile */}
               <div className="relative profile-menu">
                 <button
                     onClick={() => setShowProfileMenu(!showProfileMenu)}
@@ -185,7 +177,9 @@ export default function Navbar() {
                     <div className="absolute right-0 mt-2 w-64 bg-white rounded-lg shadow-lg py-1 text-gray-800 z-50">
                       <div className="px-4 py-3 border-b border-gray-100">
                         <p className="text-sm font-medium truncate">{user?.email}</p>
-                        <p className="text-xs text-gray-500">{userRole === 'admin' ? 'Administrador' : 'Usuario'}</p>
+                        <p className="text-xs text-gray-500">
+                          {userRole === 'admin' ? 'Administrador' : userRole === 'cashier' ? 'Cajero' : 'Usuario'}
+                        </p>
                       </div>
                       <Link
                           to="/profile"
@@ -207,7 +201,6 @@ export default function Navbar() {
               </div>
             </div>
 
-            {/* Mobile menu button */}
             <div className="md:hidden flex items-center">
               <button
                   onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
@@ -223,11 +216,10 @@ export default function Navbar() {
           </div>
         </div>
 
-        {/* Mobile Navigation */}
         {isMobileMenuOpen && (
             <div className="md:hidden bg-indigo-700">
               <div className="px-2 pt-2 pb-3 space-y-1">
-                {userRole === 'admin' && (
+                {canManageMenu && (
                     <div className="px-3 py-2">
                       <div className="relative">
                         <input
@@ -252,7 +244,7 @@ export default function Navbar() {
                     text="Menú del Día"
                     isActive={location.pathname.startsWith('/menu')}
                 />
-                {userRole === 'admin' && (
+                {isAdmin && (
                     <>
                       <MobileNavLink
                           to="/users"

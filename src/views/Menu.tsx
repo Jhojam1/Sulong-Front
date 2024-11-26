@@ -44,8 +44,6 @@ export default function Menu() {
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
-    const token = localStorage.getItem('token');
-    console.log('Token almacenado en localStorage:', token);
     loadDishes();
   }, []);
 
@@ -53,12 +51,9 @@ export default function Menu() {
     try {
       setIsLoading(true);
       const headers = getAuthHeaders();
-      console.log('Headers para getDish:', headers);
-
       const response = await axios.get(`${API_URL}/Dish/getDish`, {
         headers: headers
       });
-      console.log('Respuesta getDish:', response.data);
       setDishes(response.data);
       setError('');
     } catch (error: any) {
@@ -75,7 +70,6 @@ export default function Menu() {
   };
 
   const handleEdit = (item: MenuItem) => {
-    console.log('Editando item:', item);
     setEditFormData(item);
     setShowEditModal(true);
   };
@@ -86,15 +80,6 @@ export default function Menu() {
 
     try {
       const headers = getAuthHeaders();
-      console.log('=== Depuración de la petición PUT ===');
-      console.log('1. Token en localStorage:', localStorage.getItem('token'));
-      console.log('2. Headers completos:', headers);
-
-      if (!headers.Authorization) {
-        console.error('3. No se encontró el token de autorización');
-        setError('No hay token de autenticación. Por favor, inicie sesión nuevamente.');
-        return;
-      }
 
       const requestData = {
         id: editFormData.id,
@@ -109,15 +94,7 @@ export default function Menu() {
         image: editFormData.image
       };
 
-      console.log('4. URL de la petición:', `${API_URL}/Dish/uptDish/${editFormData.id}`);
-      console.log('5. Datos a enviar:', requestData);
-      console.log('6. Headers de la petición:', {
-        ...headers,
-        'Content-Type': 'application/json',
-        'Accept': 'application/json'
-      });
-
-      const response = await axios.put(
+      await axios.put(
           `${API_URL}/Dish/uptDish/${editFormData.id}`,
           requestData,
           {
@@ -129,31 +106,15 @@ export default function Menu() {
           }
       );
 
-      console.log('7. Respuesta exitosa:', response.data);
       setShowEditModal(false);
       setEditFormData(null);
       loadDishes();
       setError('');
     } catch (error: any) {
-      console.error('=== Error en la petición PUT ===');
-      console.error('1. Error completo:', error);
-      console.error('2. Respuesta del servidor:', error.response);
-      console.error('3. Datos de la respuesta:', error.response?.data);
-      console.error('4. Estado de la respuesta:', error.response?.status);
-      console.error('5. Headers de la respuesta:', error.response?.headers);
-      console.error('6. Config de la petición:', error.config);
-
-      if (error.config) {
-        console.log('7. Headers enviados:', error.config.headers);
-        console.log('8. URL completa:', error.config.url);
-        console.log('9. Método:', error.config.method);
-        console.log('10. Data enviada:', error.config.data);
-      }
-
       let errorMessage = 'Error al actualizar el plato. ';
 
       if (error.response?.status === 403) {
-        errorMessage += 'No tiene permisos para realizar esta acción. Por favor, verifique su rol y permisos.';
+        errorMessage += 'No tiene permisos para realizar esta acción.';
       } else if (error.response?.data?.message) {
         errorMessage += error.response.data.message;
       } else if (error.message) {
@@ -166,13 +127,28 @@ export default function Menu() {
 
   const handleSubmitOrder = async () => {
     try {
-      // Aquí iría la lógica para enviar la orden
+      const headers = getAuthHeaders();
+
+      if (!selectedItem || !orderLocation) {
+        setError('Por favor complete todos los campos requeridos.');
+        return;
+      }
+
+      const orderData = {
+        dishId: selectedItem.id,
+        location: orderLocation,
+        observations: orderObservations
+      };
+
+      await axios.post(`${API_URL}/Order/createOrder`, orderData, { headers });
+
       setShowOrderModal(false);
       setSelectedItem(null);
       setOrderLocation('');
       setOrderObservations('');
-    } catch (error) {
-      console.error('Error submitting order:', error);
+      loadDishes();
+    } catch (error: any) {
+      setError('Error al crear el pedido. Por favor, intente nuevamente.');
     }
   };
 
@@ -182,11 +158,14 @@ export default function Menu() {
         (!dish.maxDailyAmount || dish.ordersToday < dish.maxDailyAmount);
   };
 
+  const canManageMenu = userRole === 'admin' || userRole === 'cashier';
+  const isRegularUser = userRole === 'user';
+
   const filteredDishes = dishes.filter(dish => {
     const matchesSearch = dish.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
         dish.description.toLowerCase().includes(searchTerm.toLowerCase());
 
-    if (userRole !== 'admin') {
+    if (isRegularUser) {
       return matchesSearch && isAvailable(dish);
     }
 
@@ -220,7 +199,7 @@ export default function Menu() {
                 <Search className="absolute left-3 top-2.5 h-5 w-5 text-gray-400" />
               </div>
 
-              {userRole === 'admin' && (
+              {canManageMenu && (
                   <Button
                       onClick={() => navigate('/menu/new')}
                       className="w-full sm:w-auto"
@@ -281,17 +260,15 @@ export default function Menu() {
                     </p>
 
                     <div className="flex items-center justify-between">
-                  <span
-                      className={`px-3 py-1 rounded-full text-sm font-medium ${
-                          isAvailable(item)
-                              ? 'bg-green-100 text-green-800'
-                              : 'bg-red-100 text-red-800'
-                      }`}
-                  >
+                  <span className={`px-3 py-1 rounded-full text-sm font-medium ${
+                      isAvailable(item)
+                          ? 'bg-green-100 text-green-800'
+                          : 'bg-red-100 text-red-800'
+                  }`}>
                     {isAvailable(item) ? 'Disponible' : 'No Disponible'}
                   </span>
 
-                      {userRole === 'admin' ? (
+                      {canManageMenu ? (
                           <Button
                               variant="secondary"
                               size="sm"
