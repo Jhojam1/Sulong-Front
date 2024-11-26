@@ -101,8 +101,11 @@ export default function Navbar() {
                 className="flex items-center cursor-pointer"
                 onClick={() => navigate(canManageMenu ? '/dashboard' : '/menu')}
             >
-              <Package className="h-8 w-8" />
-              <span className="ml-2 text-xl font-bold hidden sm:block">OrderPro</span>
+              <img 
+                src="Images/Navbar.png" 
+                alt="Logo" 
+                className="h-22 w-28 object-contain" 
+            />
             </div>
 
             <div className="hidden md:flex items-center space-x-4 lg:space-x-8">
