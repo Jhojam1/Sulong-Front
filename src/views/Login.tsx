@@ -101,11 +101,7 @@ export default function Login() {
                 </Link>
               </div>
 
-              <div className="mt-4 text-center">
-                <Link to="/activate" className="text-sm text-indigo-600 hover:text-indigo-500">
-                  ¿Necesitas activar tu cuenta?
-                </Link>
-              </div>
+            
 
               {/* Mostrar errores si existen */}
               {error && (
