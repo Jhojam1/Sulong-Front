@@ -1,20 +1,73 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { UserPlus, ArrowLeft } from 'lucide-react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import Input from '../components/ui/Input';
 import Button from '../components/ui/Button';
+import { Company, Role } from '../types/UserRegister';
+import { companyApi } from '../services/Company';
+import { userApi } from '../services/UserRegister';
+
 
 export default function Register() {
+  const navigate = useNavigate();
+  const [companies, setCompanies] = useState<Company[]>([]);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState('');
+  
   const [formData, setFormData] = useState({
-    name: '',
-    email: '',
+    fullName: '',
+    numberIdentification: '',
+    mail: '',
     password: '',
-    confirmPassword: ''
+    confirmPassword: '',
+    numberPhone: '',
+    company: '',
   });
 
-  const handleSubmit = (e: React.FormEvent) => {
+  useEffect(() => {
+    loadCompanies();
+  }, []);
+
+  const loadCompanies = async () => {
+    try {
+      const companiesData = await companyApi.getAllCompanies();
+      setCompanies(companiesData);
+    } catch (error) {
+      setError('Error al cargar las empresas');
+      console.error('Error loading companies:', error);
+    }
+  };
+
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    // Implement registration logic
+    setError('');
+    setLoading(true);
+
+    if (formData.password !== formData.confirmPassword) {
+      setError('Las contraseñas no coinciden');
+      setLoading(false);
+      return;
+    }
+
+    try {
+      const userData = {
+        fullName: formData.fullName,
+        numberIdentification: parseInt(formData.numberIdentification),
+        state: 'PENDING',
+        mail: formData.mail,
+        password: formData.password,
+        numberPhone: formData.numberPhone,
+        role: Role.Usuario,
+        company: { id: parseInt(formData.company) }
+      };
+
+      await userApi.registerUser(userData);
+      navigate('/login');
+    } catch (error) {
+      setError(error instanceof Error ? error.message : 'Error al registrar usuario');
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -35,21 +88,62 @@ export default function Register() {
 
       <div className="mt-8 sm:mx-auto sm:w-full sm:max-w-md">
         <div className="bg-white py-8 px-4 shadow sm:rounded-lg sm:px-10">
+          {error && (
+            <div className="mb-4 p-3 bg-red-100 border border-red-400 text-red-700 rounded">
+              {error}
+            </div>
+          )}
+          
           <form onSubmit={handleSubmit} className="space-y-6">
             <Input
               label="Nombre completo"
-              value={formData.name}
-              onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+              value={formData.fullName}
+              onChange={(e) => setFormData({ ...formData, fullName: e.target.value })}
+              required
+            />
+
+            <Input
+              label="Número de identificación"
+              type="number"
+              value={formData.numberIdentification}
+              onChange={(e) => setFormData({ ...formData, numberIdentification: e.target.value })}
               required
             />
 
             <Input
               label="Correo electrónico"
               type="email"
-              value={formData.email}
-              onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+              value={formData.mail}
+              onChange={(e) => setFormData({ ...formData, mail: e.target.value })}
               required
             />
+
+            <Input
+              label="Teléfono"
+              type="tel"
+              value={formData.numberPhone}
+              onChange={(e) => setFormData({ ...formData, numberPhone: e.target.value })}
+              required
+            />
+
+            <div>
+              <label className="block text-sm font-medium text-gray-700">
+                Empresa
+              </label>
+              <select
+                className="mt-1 block w-full pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm rounded-md"
+                value={formData.company}
+                onChange={(e) => setFormData({ ...formData, company: e.target.value })}
+                required
+              >
+                <option value="">Seleccione una empresa</option>
+                {companies.map((company) => (
+                  <option key={company.id} value={company.id}>
+                    {company.name}
+                  </option>
+                ))}
+              </select>
+            </div>
 
             <Input
               label="Contraseña"
@@ -67,8 +161,12 @@ export default function Register() {
               required
             />
 
-            <Button type="submit" className="w-full">
-              Registrarse
+            <Button 
+              type="submit" 
+              className="w-full"
+              disabled={loading}
+            >
+              {loading ? 'Registrando...' : 'Registrarse'}
             </Button>
 
             <p className="text-center text-sm text-gray-600">

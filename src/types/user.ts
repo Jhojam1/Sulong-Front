@@ -14,6 +14,7 @@ export interface TempUser {
     role: string;
 }
 
+
 export interface UserRegistration {
     fullName: string;
     numberIdentification: string;
