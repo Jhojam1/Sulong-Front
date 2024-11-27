@@ -32,16 +32,21 @@ export default function PendingUsers() {
   const handleAccept = async (user: TempUser) => {
     setProcessing(user.id);
     try {
-      await userService.registerUser({
+      const userToRegister = {
+        id: user.id,
         fullName: user.fullName,
-        numberIdentification: user.numberIdentification,
+        numberIdentification: Number(user.numberIdentification), // Convertir a Long
+        state: 'Activo',
         mail: user.mail,
         password: user.password,
-        numberPhone: user.numberPhone,
         role: user.role,
-        state: 'Activo'
-      });
+        numberPhone: user.numberPhone,
+        company: user.company || null // Asegurarse de que company esté presente
+      };
 
+      console.log('Objeto enviado a registerUser:', userToRegister);
+
+      await userService.registerUser(userToRegister);
       await userService.deleteTempUser(user.id);
       setPendingUsers(prevUsers => prevUsers.filter(u => u.id !== user.id));
       toast.success('Usuario registrado exitosamente');

@@ -1,3 +1,5 @@
+import {Company} from "./UserRegister.ts";
+
 export enum Role {
     Usuario = 'Usuario',
     Administrador = 'Administrador',
@@ -15,14 +17,16 @@ export interface TempUser {
 }
 
 
-export interface UserRegistration {
+export interface BaseUser {
+    id: number;
     fullName: string;
-    numberIdentification: string;
+    numberIdentification: number;
     mail: string;
     password: string;
     numberPhone: string;
-    role: string;
+    role: Role;
     state: string;
+    company: Company | null;
 }
 
 export interface User {

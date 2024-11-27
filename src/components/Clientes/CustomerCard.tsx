@@ -71,10 +71,12 @@ export default function CustomerCard({ customer, onStatusToggle, onEdit }: Custo
                             <span>{customer.numberPhone}</span>
                         </div>
                     )}
-                    <div className="flex items-center text-sm text-gray-600">
-                        <Building2 className="h-4 w-4 mr-2 text-gray-400" />
-                        <span className="truncate">{customer.company.name}</span>
-                    </div>
+                    {customer.company && (
+                        <div className="flex items-center text-sm text-gray-600">
+                            <Building2 className="h-4 w-4 mr-2 text-gray-400" />
+                            <span className="truncate">{customer.company.name}</span>
+                        </div>
+                    )}
                 </div>
                 <div className="mt-4 flex justify-end space-x-2">
                     <Button variant="secondary" size="sm" onClick={onEdit} className="hover:bg-gray-100">

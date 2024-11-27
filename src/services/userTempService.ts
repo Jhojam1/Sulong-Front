@@ -24,13 +24,15 @@ export const userService = {
     registerUser: async (userData: UserRegistration) => {
         try {
             const response = await axiosInstance.post('/auth/registerUser', {
+                id: userData.id,
                 fullName: userData.fullName,
                 numberIdentification: userData.numberIdentification,
                 mail: userData.mail,
                 password: userData.password,
-                phoneNumber: userData.numberPhone, // Cambiado a phoneNumber para coincidir con el backend
+                numberPhone: userData.numberPhone,
                 role: userData.role,
-                state: 'Activo'
+                state: userData.state,
+                company: userData.company
             });
 
             return response.data;
