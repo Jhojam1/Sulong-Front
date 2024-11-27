@@ -1,11 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import {
-  Package,
   ClipboardList,
   Users,
   Settings,
-  Search,
   Menu as MenuIcon,
   X,
   LogOut,
@@ -109,17 +107,6 @@ export default function Navbar() {
             </div>
 
             <div className="hidden md:flex items-center space-x-4 lg:space-x-8">
-              {canManageMenu && (
-                  <div className="relative">
-                    <input
-                        type="text"
-                        placeholder="Buscar pedido..."
-                        className="w-48 lg:w-64 px-4 py-1 rounded-lg text-gray-800 bg-white/90 focus:outline-none focus:ring-2 focus:ring-white"
-                    />
-                    <Search className="absolute right-3 top-1.5 h-5 w-5 text-gray-500" />
-                  </div>
-              )}
-
               <div className="flex items-center space-x-4 lg:space-x-6">
                 <NavLink
                     to="/orders"
@@ -222,19 +209,6 @@ export default function Navbar() {
         {isMobileMenuOpen && (
             <div className="md:hidden bg-indigo-700">
               <div className="px-2 pt-2 pb-3 space-y-1">
-                {canManageMenu && (
-                    <div className="px-3 py-2">
-                      <div className="relative">
-                        <input
-                            type="text"
-                            placeholder="Buscar pedido..."
-                            className="w-full px-4 py-2 rounded-lg text-gray-800 bg-white/90 focus:outline-none focus:ring-2 focus:ring-white"
-                        />
-                        <Search className="absolute right-3 top-2.5 h-5 w-5 text-gray-500" />
-                      </div>
-                    </div>
-                )}
-
                 <MobileNavLink
                     to="/orders"
                     icon={<ClipboardList className="h-5 w-5" />}
