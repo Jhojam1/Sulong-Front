@@ -12,10 +12,10 @@ interface DishFormData {
     description: string;
     price: string;
     state: string;
-    amount: number;
-    maxDailyAmount: number;
+    amount: string;  // Cambiado a string
+    maxDailyAmount: string;  // Cambiado a string
     image: string;
-    ordersToday?: number; // Añadimos este campo que parece requerir el backend
+    ordersToday?: number;
 }
 
 const initialFormData: DishFormData = {
@@ -23,10 +23,10 @@ const initialFormData: DishFormData = {
     description: '',
     price: '',
     state: 'Disponible',
-    amount: 0,
-    maxDailyAmount: 0,
+    amount: '',
+    maxDailyAmount: '',
     image: '',
-    ordersToday: 0, // Inicializamos con 0 para evitar el null
+    ordersToday: 0,
 };
 
 export default function CreateDish() {
@@ -46,12 +46,8 @@ export default function CreateDish() {
             // Validaciones básicas
             if (!formData.name.trim()) throw new Error('El nombre del plato es requerido');
             if (!formData.price.trim()) throw new Error('El precio es requerido');
-            if (formData.amount < 0) throw new Error('La cantidad no puede ser negativa');
-            if (formData.maxDailyAmount < 0) throw new Error('La cantidad máxima diaria no puede ser negativa');
-
-            // Log de los datos antes de enviar
-            console.log('Token:', token);
-            console.log('Datos a enviar:', JSON.stringify(formData, null, 2));
+            if (parseInt(formData.amount) < 0) throw new Error('La cantidad no puede ser negativa');
+            if (parseInt(formData.maxDailyAmount) < 0) throw new Error('La cantidad máxima diaria no puede ser negativa');
 
             const response = await axios.post(`${API_URL}/Dish/saveDish`, formData, {
                 headers: {
@@ -59,17 +55,9 @@ export default function CreateDish() {
                     'Content-Type': 'application/json',
                 },
             }).catch(error => {
-                // Log detallado del error
                 console.error('Error completo:', error);
-                console.error('Respuesta del servidor:', error.response);
-                console.error('Datos de la respuesta:', error.response?.data);
-                console.error('Estado de la respuesta:', error.response?.status);
-                console.error('Headers de la respuesta:', error.response?.headers);
                 throw error;
             });
-
-            // Log de la respuesta exitosa
-            console.log('Respuesta exitosa:', response.data);
 
             if (response.data) {
                 navigate('/menu');
@@ -84,25 +72,42 @@ export default function CreateDish() {
 
     const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
         const { name, value } = e.target;
-        const updatedValue = name === 'amount' || name === 'maxDailyAmount' ? parseInt(value) || 0 : value;
+        const updatedValue = name === 'amount' || name === 'maxDailyAmount' ? value : value;
 
         // Log del cambio de valor
-        console.log(`Campo ${name} actualizado:`, updatedValue);
+        setFormData(prev => ({
+            ...prev,
+            [name]: updatedValue,
+        }));
+    };
 
-        setFormData(prev => {
-            const newData = {
-                ...prev,
-                [name]: updatedValue,
-            };
-            console.log('Nuevo estado del formulario:', newData);
-            return newData;
-        });
+    const formatNumber = (value: string, isPrice: boolean = false) => {
+        // Eliminar caracteres no numéricos
+        const cleanedValue = value.replace(/\D/g, '');
+        if (cleanedValue === '') return '';
+
+        // Si es un precio, se manejan los decimales
+        if (isPrice) {
+            const numberValue = parseInt(cleanedValue);
+            return numberValue.toLocaleString('es-CO'); // Formato de moneda con separadores de miles
+        }
+
+        // Para otros números (cantidad), separadores de miles
+        return cleanedValue.replace(/\B(?=(\d{3})+(?!\d))/g, '.');
+    };
+
+    const handleNumericInput = (e: React.ChangeEvent<HTMLInputElement>, field: keyof DishFormData, isPrice: boolean = false) => {
+        const value = e.target.value;
+        const formattedValue = formatNumber(value, isPrice);
+        setFormData(prev => ({
+            ...prev,
+            [field]: formattedValue,
+        }));
     };
 
     return (
         <div className="min-h-screen bg-gray-100 p-4 sm:p-6 lg:p-8">
             <div className="max-w-4xl mx-auto">
-                {/* Botón volver - Responsive */}
                 <div className="mb-4 sm:mb-6">
                     <Button
                         variant="ghost"
@@ -114,7 +119,6 @@ export default function CreateDish() {
                     </Button>
                 </div>
 
-                {/* Encabezado principal - Responsive */}
                 <div className="bg-indigo-600 text-center py-4 sm:py-6 rounded-lg shadow-md mb-4 sm:mb-6">
                     <h1 className="text-2xl sm:text-3xl font-bold text-white flex items-center justify-center gap-2 sm:gap-3">
                         <Utensils className="h-6 w-6 sm:h-8 sm:w-8" />
@@ -122,22 +126,12 @@ export default function CreateDish() {
                     </h1>
                 </div>
 
-                {/* Debug Info - Solo visible en desarrollo */}
-                {process.env.NODE_ENV === 'development' && (
-                    <div className="mb-4 p-4 bg-gray-100 border border-gray-300 rounded-lg overflow-auto">
-                        <h3 className="font-bold mb-2">Debug Info:</h3>
-                        <pre className="text-xs">{JSON.stringify(formData, null, 2)}</pre>
-                    </div>
-                )}
-
-                {/* Mensaje de error */}
                 {error && (
                     <div className="mb-4 p-4 bg-red-100 border border-red-400 text-red-700 rounded-lg">
                         {error}
                     </div>
                 )}
 
-                {/* Contenido del formulario - Responsive */}
                 <div className="bg-white shadow-xl rounded-lg overflow-hidden">
                     <form onSubmit={handleSubmit} className="p-4 sm:p-6 space-y-4 sm:space-y-6">
                         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6">
@@ -154,7 +148,7 @@ export default function CreateDish() {
                                 label="Precio"
                                 name="price"
                                 value={formData.price}
-                                onChange={handleChange}
+                                onChange={(e) => handleNumericInput(e, 'price', true)}  // Aplicar formato de precio
                                 placeholder="Ej: 15000"
                                 type="text"
                                 required
@@ -191,7 +185,6 @@ export default function CreateDish() {
                                 type="url"
                             />
 
-                            {/* Vista previa de la imagen - Responsive */}
                             {formData.image && (
                                 <div className="sm:col-span-2">
                                     <label className="block text-sm font-medium text-gray-700 mb-2">
@@ -215,9 +208,9 @@ export default function CreateDish() {
                                 label="Cantidad Total"
                                 name="amount"
                                 value={formData.amount}
-                                onChange={handleChange}
-                                type="number"
-                                min="0"
+                                onChange={(e) => handleNumericInput(e, 'amount')}
+                                placeholder="Ej: 200"
+                                type="text"
                                 required
                             />
 
@@ -225,14 +218,13 @@ export default function CreateDish() {
                                 label="Cantidad Máxima Diaria"
                                 name="maxDailyAmount"
                                 value={formData.maxDailyAmount}
-                                onChange={handleChange}
-                                type="number"
-                                min="0"
+                                onChange={(e) => handleNumericInput(e, 'maxDailyAmount')}
+                                placeholder="Ej: 20"
+                                type="text"
                                 required
                             />
                         </div>
 
-                        {/* Botones - Responsive */}
                         <div className="flex flex-col sm:flex-row justify-end gap-3 pt-4 border-t border-gray-200">
                             <Button
                                 type="button"
@@ -249,9 +241,9 @@ export default function CreateDish() {
                             >
                                 {isSubmitting ? (
                                     <span className="flex items-center justify-center">
-                    <Upload className="animate-spin h-5 w-5 mr-2" />
-                    Creando...
-                  </span>
+                                        <Upload className="animate-spin h-5 w-5 mr-2" />
+                                        Creando...
+                                    </span>
                                 ) : (
                                     'Crear Plato'
                                 )}
