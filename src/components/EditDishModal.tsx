@@ -48,11 +48,15 @@ export default function EditDishModal({
     };
 
     const handleNumericInput = (e: React.ChangeEvent<HTMLInputElement>, field: keyof MenuItem) => {
-        const value = e.target.value;
-        // Solo permite números positivos
-        if (/^\d*$/.test(value)) {
-            handleInputChange(field, value === '' ? 0 : parseInt(value));
-        }
+        let value = e.target.value;
+
+        // Elimina caracteres no numéricos
+        value = value.replace(/[^\d]/g, "");
+
+        // Formatea el número con puntos cada tres dígitos
+        const formattedValue = Number(value).toLocaleString('de-DE');
+
+        handleInputChange(field, formattedValue === '' ? '0' : formattedValue);
     };
 
     return (
