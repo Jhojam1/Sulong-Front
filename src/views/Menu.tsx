@@ -7,6 +7,7 @@ import OrderModal from '../components/OrderModal';
 import { useAuth } from '../contexts/AuthContext';
 import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
+import {orderService} from "../services/Order.ts";
 
 interface MenuItem {
   id: number;
@@ -30,7 +31,7 @@ const LOCATIONS = [
 ];
 
 export default function Menu() {
-  const { userRole, getAuthHeaders } = useAuth();
+  const { userRole, getAuthHeaders, user } = useAuth();
   const navigate = useNavigate();
   const [dishes, setDishes] = useState<MenuItem[]>([]);
   const [showOrderModal, setShowOrderModal] = useState(false);
@@ -41,6 +42,7 @@ export default function Menu() {
   const [searchTerm, setSearchTerm] = useState('');
   const [editFormData, setEditFormData] = useState<MenuItem | null>(null);
   const [error, setError] = useState<string>('');
+  const [orderStatus, setOrderStatus] = useState<string>('');
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
@@ -127,27 +129,58 @@ export default function Menu() {
 
   const handleSubmitOrder = async () => {
     try {
-      const headers = getAuthHeaders();
-
-      if (!selectedItem || !orderLocation) {
+      if (!selectedItem || !orderLocation || !user) {
         setError('Por favor complete todos los campos requeridos.');
         return;
       }
 
+      const today = new Date();
+      today.setHours(0, 0, 0, 0);
+
       const orderData = {
-        dishId: selectedItem.id,
-        location: orderLocation,
-        observations: orderObservations
+        user: {
+          id: user.id,
+          role: 'Usuario' // Add the user role to the order data
+        },
+        dish: {
+          id: selectedItem.id
+        },
+        headquarter: {
+          id: parseInt(orderLocation)
+        },
+        observation: orderObservations,
+        state: 'Pendiente',
+        fechaPedido: today.toISOString(),
+
       };
 
-      await axios.post(`${API_URL}/Order/createOrder`, orderData, { headers });
+      console.log('=== Order Information ===');
+      console.log('User ID:', user.id);
+      console.log('User Role:', userRole);
+      console.log('Dish Details:', {
+        id: selectedItem.id,
+        name: selectedItem.name,
+        price: selectedItem.price
+      });
+      console.log('Location ID:', orderLocation);
+      console.log('Observations:', orderObservations);
+      console.log('Order Date:', today.toISOString());
+      console.log('Complete Order Data:', orderData);
+      console.log('=====================');
 
+      await orderService.createOrder(orderData);
+      setOrderStatus('¡Pedido creado exitosamente!');
       setShowOrderModal(false);
       setSelectedItem(null);
       setOrderLocation('');
       setOrderObservations('');
       loadDishes();
+
+      setTimeout(() => {
+        setOrderStatus('');
+      }, 3000);
     } catch (error: any) {
+      console.error('Error creating order:', error);
       setError('Error al crear el pedido. Por favor, intente nuevamente.');
     }
   };
@@ -183,6 +216,17 @@ export default function Menu() {
   return (
       <div className="min-h-screen bg-gray-50">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+          {orderStatus && (
+              <div className="fixed top-4 right-4 bg-green-100 border border-green-400 text-green-700 px-4 py-3 rounded z-50">
+                {orderStatus}
+              </div>
+          )}
+          {error && (
+              <div className="fixed top-4 right-4 bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded z-50">
+                {error}
+              </div>
+          )}
+
           <div className="flex flex-col sm:flex-row justify-between items-center mb-8 gap-4">
             <h1 className="text-3xl font-bold text-gray-900">
               Menú del Día
@@ -210,12 +254,6 @@ export default function Menu() {
               )}
             </div>
           </div>
-
-          {error && (
-              <div className="mb-6 p-4 bg-red-100 border border-red-400 text-red-700 rounded-lg">
-                {error}
-              </div>
-          )}
 
           {filteredDishes.length === 0 && (
               <div className="text-center py-12">
