@@ -21,11 +21,11 @@ interface EditDishModalProps {
 }
 
 export default function EditDishModal({
-                                          editFormData,
-                                          onClose,
-                                          onSubmit,
-                                          onChange
-                                      }: EditDishModalProps) {
+    editFormData,
+    onClose,
+    onSubmit,
+    onChange
+}: EditDishModalProps) {
     const [isSubmitting, setIsSubmitting] = useState(false);
 
     const handleSubmit = async (e: React.FormEvent) => {
@@ -45,6 +45,14 @@ export default function EditDishModal({
             ...editFormData,
             [field]: value
         });
+    };
+
+    const handleNumericInput = (e: React.ChangeEvent<HTMLInputElement>, field: keyof MenuItem) => {
+        const value = e.target.value;
+        // Solo permite números positivos
+        if (/^\d*$/.test(value)) {
+            handleInputChange(field, value === '' ? 0 : parseInt(value));
+        }
     };
 
     return (
@@ -76,33 +84,46 @@ export default function EditDishModal({
                                                 required
                                             />
 
-                                            <Input
-                                                label="Precio"
-                                                type="text"
-                                                value={editFormData.price}
-                                                onChange={(e) => handleInputChange('price', e.target.value)}
-                                                required
-                                            />
+                                            <div>
+                                                <label className="block text-sm font-medium text-gray-700 mb-1">
+                                                    Precio
+                                                </label>
+                                                <input
+                                                    type="text"
+                                                    className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500"
+                                                    value={editFormData.price}
+                                                    onChange={(e) => handleNumericInput(e, 'price')}
+                                                    required
+                                                />
+                                            </div>
                                         </div>
 
                                         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                            <Input
-                                                label="Cantidad total"
-                                                type="number"
-                                                min="0"
-                                                value={editFormData.amount}
-                                                onChange={(e) => handleInputChange('amount', parseInt(e.target.value) || 0)}
-                                                required
-                                            />
+                                            <div>
+                                                <label className="block text-sm font-medium text-gray-700 mb-1">
+                                                    Cantidad total
+                                                </label>
+                                                <input
+                                                    type="text"
+                                                    className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500"
+                                                    value={editFormData.amount}
+                                                    onChange={(e) => handleNumericInput(e, 'amount')}
+                                                    required
+                                                />
+                                            </div>
 
-                                            <Input
-                                                label="Máx. diario"
-                                                type="number"
-                                                min="0"
-                                                value={editFormData.maxDailyAmount}
-                                                onChange={(e) => handleInputChange('maxDailyAmount', parseInt(e.target.value) || 0)}
-                                                required
-                                            />
+                                            <div>
+                                                <label className="block text-sm font-medium text-gray-700 mb-1">
+                                                    Máx. diario
+                                                </label>
+                                                <input
+                                                    type="text"
+                                                    className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500"
+                                                    value={editFormData.maxDailyAmount}
+                                                    onChange={(e) => handleNumericInput(e, 'maxDailyAmount')}
+                                                    required
+                                                />
+                                            </div>
                                         </div>
 
                                         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -184,14 +205,14 @@ export default function EditDishModal({
                                 >
                                     {isSubmitting ? (
                                         <span className="flex items-center justify-center">
-                      <Save className="animate-spin h-5 w-5 mr-2" />
-                      Guardando...
-                    </span>
+                                            <Save className="animate-spin h-5 w-5 mr-2" />
+                                            Guardando...
+                                        </span>
                                     ) : (
                                         <span className="flex items-center justify-center">
-                      <Save className="h-5 w-5 mr-2" />
-                      Guardar Cambios
-                    </span>
+                                            <Save className="h-5 w-5 mr-2" />
+                                            Guardar Cambios
+                                        </span>
                                     )}
                                 </button>
                             </div>
